@@ -1,0 +1,24 @@
+{
+  "name": "claudecodelad",
+  "owner": {
+    "name": "Elad",
+    "email": "eladlaor88@gmail.com"
+  },
+  "metadata": {
+    "description": "Personal Claude Code plugin marketplace by Elad."
+  },
+  "plugins": [
+    {
+      "name": "date-context",
+      "source": "./plugins/date-context",
+      "description": "Injects today's date into Claude's context on every session start. Fixes the 'Claude doesn't know what day it is' problem.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Elad"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": ["date", "context", "session"]
+    }
+  ]
+}
