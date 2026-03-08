@@ -1,0 +1,5 @@
+{
+  "name": "session-finder",
+  "description": "Indexes Claude Code sessions on exit and provides a skill to find past sessions by description.",
+  "version": "1.0.0"
+}
