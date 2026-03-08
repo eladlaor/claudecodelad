@@ -7,7 +7,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/handlers/index-session.sh",
-            "timeout": 10000
+            "timeout": 30000
           }
         ]
       }

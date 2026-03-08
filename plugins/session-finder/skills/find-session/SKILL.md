@@ -17,8 +17,10 @@ The user wants to find a past Claude Code session. Their search description is: 
 4. **Deduplicate.** If the same `session_id` appears multiple times, keep only the latest entry (last occurrence in the file).
 
 5. **Rank results.** Use your reasoning to rank which sessions best match the user's description based on:
-   - Summary text relevance
-   - User prompts content
+   - Summary (LLM-generated one-liner when available)
+   - Session name (if renamed via /rename)
+   - First and last prompt content
+   - Files touched (strong signal for code-related searches)
    - Project path
    - Branch name
    - Recency (prefer recent sessions when relevance is similar)
@@ -27,11 +29,13 @@ The user wants to find a past Claude Code session. Their search description is: 
 
    For each match:
    ```
-   **Session:** `<session_id>`
+   **Session:** `<session_id>` (<session_name if available>)
    **Project:** <project path> (branch: <branch>)
    **Date:** <started_at formatted nicely> — <duration if calculable>
-   **Summary:** <summary text>
-   **Key prompts:** <first 2-3 user prompts, abbreviated>
+   **Summary:** <summary>
+   **First prompt:** <first prompt, abbreviated>
+   **Last prompt:** <last prompt, abbreviated>
+   **Files touched:** <list of files, or "none" if empty>
    **Resume:** `claude --resume <session_id>`
    ```
 
