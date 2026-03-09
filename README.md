@@ -20,6 +20,8 @@ Then install any plugin:
 
 ### date-context
 
+<img src="illustrations/today_is_today.jpg" width="500">
+
 Claude Code doesn't natively know what day it is. This plugin injects today's date into Claude's context on every session start.
 
 ```
@@ -27,6 +29,8 @@ Claude Code doesn't natively know what day it is. This plugin injects today's da
 ```
 
 ### session-finder
+
+<img src="illustrations/session_finder.jpg" width="600">
 
 Gives Claude Code a searchable memory of past sessions.
 
