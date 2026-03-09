@@ -24,6 +24,14 @@ if [[ -z "$transcript_path" ]] || [[ ! -f "$transcript_path" ]] || [[ ! -s "$tra
   exit 0
 fi
 
+# Guard: skip sessions spawned by this hook's own LLM summarization call.
+# The `claude -p` summarizer produces a session whose only user prompt starts
+# with our known summarization instruction.
+first_user_msg=$(jq -sc '[.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content][0] // ""' "$transcript_path" 2>/dev/null)
+if [[ "$first_user_msg" == *"Summarize this Claude Code session in one sentence"* ]]; then
+  exit 0
+fi
+
 # Extract metadata in a single jq pass over the transcript
 metadata=$(jq -sc '
   {
@@ -56,6 +64,7 @@ summary=""
 if command -v claude &>/dev/null; then
   all_user_prompts=$(jq -sc '[.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content[:200]]' "$transcript_path" 2>/dev/null)
   summary=$(echo "$all_user_prompts" | env -u CLAUDECODE claude -p \
+    --no-session-persistence \
     --model claude-haiku-4-5-20251001 \
     --max-turns 1 \
     "Summarize this Claude Code session in one sentence (max 120 chars). These are the user prompts. Output ONLY the summary, no quotes, no preamble:" 2>/dev/null || true)
