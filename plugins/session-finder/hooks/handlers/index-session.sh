@@ -10,6 +10,18 @@ if ! command -v jq &>/dev/null; then
 fi
 
 INDEX_FILE="$HOME/.claude/session-index.jsonl"
+CLEANUP_MARKER="$HOME/.claude/.session-index-cleaned"
+
+# --- Fix 4: One-time cleanup of leaked summarization entries ---
+if [[ -f "$INDEX_FILE" ]] && [[ ! -f "$CLEANUP_MARKER" ]]; then
+  leaked_count=$(grep -c "Summarize this Claude Code session" "$INDEX_FILE" 2>/dev/null || echo "0")
+  if [[ "$leaked_count" -gt 0 ]]; then
+    tmp_index="${INDEX_FILE}.cleanup.$$"
+    grep -v "Summarize this Claude Code session" "$INDEX_FILE" > "$tmp_index" 2>/dev/null || true
+    mv "$tmp_index" "$INDEX_FILE"
+  fi
+  touch "$CLEANUP_MARKER"
+fi
 
 # Read hook input from stdin
 input=$(cat)
@@ -27,23 +39,41 @@ fi
 # Guard: skip sessions spawned by this hook's own LLM summarization call.
 # The `claude -p` summarizer produces a session whose only user prompt starts
 # with our known summarization instruction.
-first_user_msg=$(jq -sc '[.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content][0] // ""' "$transcript_path" 2>/dev/null)
-if [[ "$first_user_msg" == *"Summarize this Claude Code session in one sentence"* ]]; then
+first_user_msg=$(jq -sc '[.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content][0] // ""' "$transcript_path" 2>/dev/null || echo "")
+if [[ "$first_user_msg" == *"Summarize this Claude Code session"* ]]; then
   exit 0
 fi
 
-# Extract metadata in a single jq pass over the transcript
+# --- Fix 2: Defensive metadata extraction ---
+# Wrap in a subshell so failures don't kill the hook
 metadata=$(jq -sc '
+  # --- Fix 1: Reusable filter for "real" user prompts ---
+  # Excludes: isMeta messages, XML-tag hook injections, summarization prompts
+  def real_prompt:
+    select(
+      .type == "user"
+      and (.message.content | type) == "string"
+      and (.isMeta | not)
+      and (.message.content | startswith("<") | not)
+      and (.message.content | test("Summarize this Claude Code session") | not)
+    ) | .message.content[:200];
+
   {
     session_name: (map(select(.slug != null) | .slug) | last // ""),
     branch: (map(select(.gitBranch != null) | .gitBranch) | first // "unknown"),
     started_at: (map(select(.timestamp != null) | .timestamp) | first // ""),
     ended_at: (map(select(.timestamp != null) | .timestamp) | last // ""),
-    first_prompt: ([.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content[:200]] | first // ""),
-    last_prompt: ([.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content[:200]] | last // ""),
+    all_real_prompts: [.[] | real_prompt],
+    first_prompt: ([.[] | real_prompt] | first // ""),
+    last_prompt: ([.[] | real_prompt] | last // ""),
     files_touched: [.[] | select(.type == "assistant") | .message.content[]? | select(.type == "tool_use" and (.name == "Write" or .name == "Edit")) | .input.file_path] | unique
   }
-' "$transcript_path" 2>/dev/null)
+' "$transcript_path" 2>/dev/null || true)
+
+# If metadata extraction failed, exit gracefully
+if [[ -z "$metadata" ]] || ! echo "$metadata" | jq -e . &>/dev/null; then
+  exit 0
+fi
 
 session_name=$(echo "$metadata" | jq -r '.session_name')
 branch=$(echo "$metadata" | jq -r '.branch')
@@ -53,16 +83,27 @@ first_prompt=$(echo "$metadata" | jq -r '.first_prompt')
 last_prompt=$(echo "$metadata" | jq -r '.last_prompt')
 files_touched_json=$(echo "$metadata" | jq -c '.files_touched')
 
-# Guard: skip if no user messages found
+# Guard: skip if no real user messages found
 if [[ -z "$first_prompt" ]]; then
   exit 0
+fi
+
+# --- Fix 3: Strengthened summarization session detection ---
+# Secondary guard: if there's exactly 1 real prompt and it matches the
+# summarization pattern, this is a summarizer session that slipped through.
+prompt_count=$(echo "$metadata" | jq -r '.all_real_prompts | length')
+if [[ "$prompt_count" -eq 1 ]]; then
+  only_prompt=$(echo "$metadata" | jq -r '.all_real_prompts[0]')
+  if [[ "$only_prompt" == *"Summarize this Claude Code session"* ]]; then
+    exit 0
+  fi
 fi
 
 # Generate LLM summary using Haiku (cheap and fast)
 # Falls back to first prompt if claude CLI unavailable or fails
 summary=""
 if command -v claude &>/dev/null; then
-  all_user_prompts=$(jq -sc '[.[] | select(.type == "user" and (.message.content | type) == "string") | .message.content[:200]]' "$transcript_path" 2>/dev/null)
+  all_user_prompts=$(echo "$metadata" | jq -c '.all_real_prompts')
   summary=$(echo "$all_user_prompts" | env -u CLAUDECODE claude -p \
     --no-session-persistence \
     --model claude-haiku-4-5-20251001 \
