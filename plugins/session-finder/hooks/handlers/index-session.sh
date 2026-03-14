@@ -1,7 +1,11 @@
 #!/bin/bash
 # SessionEnd hook: index session metadata for later searching.
+# Must complete quickly (<30s) and survive Ctrl+C (SIGINT/SIGTERM) from Claude.
 
 set -euo pipefail
+
+# Ignore INT/TERM so Ctrl+C during session exit doesn't kill this hook mid-write.
+trap '' INT TERM
 
 # Fail fast if jq is not available
 if ! command -v jq &>/dev/null; then
@@ -23,8 +27,11 @@ if [[ -f "$INDEX_FILE" ]] && [[ ! -f "$CLEANUP_MARKER" ]]; then
   touch "$CLEANUP_MARKER"
 fi
 
-# Read hook input from stdin
+# Read hook input from stdin — exit gracefully if it's not valid JSON
 input=$(cat)
+if ! echo "$input" | jq -e . &>/dev/null; then
+  exit 0
+fi
 
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 transcript_path=$(echo "$input" | jq -r '.transcript_path // empty')
@@ -99,25 +106,13 @@ if [[ "$prompt_count" -eq 1 ]]; then
   fi
 fi
 
-# Generate LLM summary using Haiku (cheap and fast)
-# Falls back to first prompt if claude CLI unavailable or fails
-summary=""
-if command -v claude &>/dev/null; then
-  all_user_prompts=$(echo "$metadata" | jq -c '.all_real_prompts')
-  summary=$(echo "$all_user_prompts" | env -u CLAUDECODE claude -p \
-    --no-session-persistence \
-    --model claude-haiku-4-5-20251001 \
-    --max-turns 1 \
-    "Summarize this Claude Code session in one sentence (max 120 chars). These are the user prompts. Output ONLY the summary, no quotes, no preamble:" 2>/dev/null || true)
-fi
-if [[ -z "$summary" ]]; then
-  summary="${first_prompt:0:120}"
-fi
-
 # Ensure index directory exists
 mkdir -p "$(dirname "$INDEX_FILE")"
 
-# Append index entry as a single JSON line
+# Write the index entry immediately with first_prompt as the summary.
+# The LLM summarization runs in the background and patches it later.
+summary="${first_prompt:0:120}"
+
 jq -nc \
   --arg sid "$session_id" \
   --arg name "$session_name" \
@@ -143,3 +138,25 @@ jq -nc \
     last_prompt: $last_prompt,
     files_touched: $files
   }' >> "$INDEX_FILE"
+
+# Fire-and-forget: generate LLM summary in the background and patch the entry.
+# This avoids blocking the hook (which has a 30s timeout) on an API call.
+if command -v claude &>/dev/null; then
+  all_user_prompts=$(echo "$metadata" | jq -c '.all_real_prompts')
+  (
+    llm_summary=$(echo "$all_user_prompts" | env -u CLAUDECODE claude -p \
+      --no-session-persistence \
+      --model claude-haiku-4-5-20251001 \
+      --max-turns 1 \
+      "Summarize this Claude Code session in one sentence (max 120 chars). These are the user prompts. Output ONLY the summary, no quotes, no preamble:" 2>/dev/null || true)
+
+    if [[ -n "$llm_summary" ]]; then
+      # Patch the entry: replace the summary for this session_id
+      tmp_index="${INDEX_FILE}.patch.$$"
+      jq -c --arg sid "$session_id" --arg new_summary "$llm_summary" \
+        'if .session_id == $sid then .summary = $new_summary else . end' \
+        "$INDEX_FILE" > "$tmp_index" 2>/dev/null && mv "$tmp_index" "$INDEX_FILE"
+    fi
+  ) &>/dev/null &
+  disown
+fi
