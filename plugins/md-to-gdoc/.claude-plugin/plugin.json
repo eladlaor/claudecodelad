@@ -1,0 +1,5 @@
+{
+  "name": "md-to-gdoc",
+  "description": "Convert markdown documents into properly formatted Google Docs using the Google Workspace CLI (gws). Supports custom format profiles.",
+  "version": "1.0.0"
+}

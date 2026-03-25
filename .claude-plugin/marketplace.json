@@ -31,6 +31,42 @@
       "license": "MIT",
       "category": "productivity",
       "tags": ["session", "search", "history", "index"]
+    },
+    {
+      "name": "worktree-manager",
+      "source": "./plugins/worktree-manager",
+      "description": "Manage persistent git worktrees for parallel human+AI development across sessions. Create, list, remove worktrees and merge worktree branches back with conflict resolution.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Elad"
+      },
+      "license": "MIT",
+      "category": "workflow-automation",
+      "tags": ["git", "worktree", "parallel", "branches", "merge", "conflict-resolution"]
+    },
+    {
+      "name": "md-to-gdoc",
+      "source": "./plugins/md-to-gdoc",
+      "description": "Convert markdown documents into properly formatted Google Docs using the Google Workspace CLI (gws). Supports custom format profiles extracted from reference Google Docs.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Elad"
+      },
+      "license": "MIT",
+      "category": "document-creation",
+      "tags": ["markdown", "google-doc", "gdoc", "conversion", "gws", "workspace", "format-profile"]
+    },
+    {
+      "name": "timewatch-fill",
+      "source": "./plugins/timewatch-fill",
+      "description": "Fill TimeWatch attendance via browser automation (claude-in-chrome). Supports filling a single day or range of days with configurable times, task, and location.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Elad"
+      },
+      "license": "MIT",
+      "category": "workflow-automation",
+      "tags": ["timewatch", "attendance", "browser-automation", "chrome", "time-tracking"]
     }
   ]
 }
