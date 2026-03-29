@@ -1,7 +1,7 @@
 # Markdown to Google Doc Converter
 
 Converts a markdown document into a properly formatted Google Doc.
-Formatting is driven by a **FormatProfile** -- either a preset (like the SoluGenAI SOW format)
+Formatting is driven by a **FormatProfile** -- either a built-in preset (SOW format)
 or extracted from any reference Google Doc.
 
 The user's request is: $ARGUMENTS
@@ -47,17 +47,17 @@ the port-binding issue.
 
 ## Locate Scripts
 
-The pipeline scripts are shipped with this plugin. Find them by resolving the path
-relative to this SKILL.md file:
+The pipeline scripts are shipped with this plugin. Locate the plugin root by searching
+for the installed plugin directory:
 
 ```bash
-# The scripts directory is two levels up from this SKILL.md
-SCRIPTS_DIR="$(cd "$(dirname "$(find ~/.claude/plugins/marketplaces -path '*/md-to-gdoc/scripts/create_gdoc.py' -type f 2>/dev/null | head -1)")" && pwd)"
+PLUGIN_SCRIPT="$(find ~/.claude/plugins -path '*/md-to-gdoc/scripts/create_gdoc.py' -type f 2>/dev/null | head -1)"
 ```
 
-If not found in the marketplace path, fall back to:
+If `$PLUGIN_SCRIPT` is empty, stop and tell the user: "md-to-gdoc plugin not found. Install with: `/plugin install md-to-gdoc@claudecodelad`"
+
 ```bash
-SCRIPTS_DIR="$HOME/.claude/plugins/marketplaces/claudecodelad/plugins/md-to-gdoc/scripts"
+SCRIPTS_DIR="$(dirname "$PLUGIN_SCRIPT")"
 ```
 
 Verify with: `test -f "$SCRIPTS_DIR/create_gdoc.py"`

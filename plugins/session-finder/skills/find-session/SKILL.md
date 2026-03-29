@@ -4,7 +4,9 @@ Search past Claude Code sessions by natural language description.
 
 ## Instructions
 
-The user wants to find a past Claude Code session. Their search description is: $ARGUMENTS
+The user wants to find a past Claude Code session. Their request is: $ARGUMENTS
+
+If the request includes a number like "top 10" or "last 20", use that as the result count. Otherwise default to 5.
 
 ### Steps
 
@@ -25,7 +27,7 @@ The user wants to find a past Claude Code session. Their search description is: 
    - Branch name
    - Recency (prefer recent sessions when relevance is similar)
 
-6. **Present results.** Show the top 5 matches (or fewer if less exist) in this format:
+6. **Present results.** Show the top N matches (where N is the requested count, default 5; fewer if less exist) in this format:
 
    For each match:
    ```

@@ -1,5 +1,5 @@
 {
   "name": "date-context",
-  "description": "Injects today's date into Claude's context on every session start.",
+  "description": "Injects today's date, day of week, current time, and timezone into Claude's context on every session start.",
   "version": "1.0.0"
 }

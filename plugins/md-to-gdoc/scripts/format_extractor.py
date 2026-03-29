@@ -10,7 +10,7 @@ Usage:
     python3 format_extractor.py <document-id-or-url> [--output <profile-path>] [--name <profile-name>]
 
 Examples:
-    python3 format_extractor.py 1FUDKLNT3p6GGfIFaymiL_SauQYWlQpgeWNnmejN9mag --name solugenai-sow
+    python3 format_extractor.py 1FUDKLNT3p6GGfIFaymiL_SauQYWlQpgeWNnmejN9mag --name default-sow
     python3 format_extractor.py "https://docs.google.com/document/d/1FUDKLNT3p6.../edit" --output profiles/my-format.json
 """
 
@@ -21,6 +21,9 @@ import re
 import subprocess
 import sys
 from typing import Optional
+
+# Ensure sibling modules are importable regardless of caller's cwd
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from format_profile import (
     FormatProfile,

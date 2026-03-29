@@ -15,6 +15,8 @@ fi
 
 INDEX_FILE="$HOME/.claude/session-index.jsonl"
 CLEANUP_MARKER="$HOME/.claude/.session-index-cleaned"
+# Model used for LLM summary generation. Override via env var for different quality/cost tradeoff.
+SUMMARY_MODEL="${SESSION_FINDER_MODEL:-claude-3-5-haiku-latest}"
 
 # --- Fix 4: One-time cleanup of leaked summarization entries ---
 if [[ -f "$INDEX_FILE" ]] && [[ ! -f "$CLEANUP_MARKER" ]]; then
@@ -146,16 +148,20 @@ if command -v claude &>/dev/null; then
   (
     llm_summary=$(echo "$all_user_prompts" | env -u CLAUDECODE claude -p \
       --no-session-persistence \
-      --model claude-haiku-4-5-20251001 \
+      --model "$SUMMARY_MODEL" \
       --max-turns 1 \
       "Summarize this Claude Code session in one sentence (max 120 chars). These are the user prompts. Output ONLY the summary, no quotes, no preamble:" 2>/dev/null || true)
 
     if [[ -n "$llm_summary" ]]; then
-      # Patch the entry: replace the summary for this session_id
+      # Patch the entry: replace the summary for this session_id.
+      # Use flock to prevent race conditions when multiple sessions end simultaneously.
       tmp_index="${INDEX_FILE}.patch.$$"
-      jq -c --arg sid "$session_id" --arg new_summary "$llm_summary" \
-        'if .session_id == $sid then .summary = $new_summary else . end' \
-        "$INDEX_FILE" > "$tmp_index" 2>/dev/null && mv "$tmp_index" "$INDEX_FILE"
+      (
+        flock -x 200
+        jq -c --arg sid "$session_id" --arg new_summary "$llm_summary" \
+          'if .session_id == $sid then .summary = $new_summary else . end' \
+          "$INDEX_FILE" > "$tmp_index" 2>/dev/null && mv "$tmp_index" "$INDEX_FILE" || rm -f "$tmp_index"
+      ) 200>"${INDEX_FILE}.lock"
     fi
   ) &>/dev/null &
   disown

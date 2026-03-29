@@ -163,8 +163,8 @@ class FormatProfile:
 
     @classmethod
     def sow_default(cls) -> "FormatProfile":
-        """The SoluGenAI SOW preset matching the standard SOW Google Doc format."""
-        return cls(name="solugenai-sow")
+        """Default SOW preset matching a professional Statement of Work format."""
+        return cls(name="default-sow")
 
     @classmethod
     def from_json(cls, path: str) -> "FormatProfile":

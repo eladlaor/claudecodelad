@@ -27,6 +27,9 @@ import subprocess
 import sys
 import tempfile
 
+# Ensure sibling modules are importable regardless of caller's cwd
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from format_profile import FormatProfile
 from md_to_gdoc import MarkdownParser, DocsRequestBuilder, split_requests
 

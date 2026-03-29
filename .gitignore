@@ -1,2 +1,12 @@
 .claude/
 knowledge/
+plugin-ideas/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Plugins not yet published
+plugins/worktree-manager/
+plugins/notebooklm-upload/
+plugins/timewatch-fill/

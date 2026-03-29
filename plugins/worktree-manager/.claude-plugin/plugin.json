@@ -1,5 +1,0 @@
-{
-  "name": "worktree-manager",
-  "description": "Manage persistent git worktrees for parallel human+AI development across sessions. Create, list, remove worktrees and merge worktree branches back with conflict resolution.",
-  "version": "1.0.0"
-}

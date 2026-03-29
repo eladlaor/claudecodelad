@@ -1,19 +1,29 @@
-# claudecodelad
+# claudelad
 
-A Claude Code plugin marketplace. Install individual plugins to enhance your Claude Code workflow.
+## Table of Contents
+
+- [Install](#install)
+- [Plugins](#plugins)
+  - [date-context](#date-context)
+  - [session-finder](#session-finder)
+  - [md-to-gdoc](#md-to-gdoc)
+
+A Claude Code plugin marketplace. Hooks, skills, and automations that extend what Claude Code can do out of the box.
+
+Three plugins covering productivity, document creation, and workflow automation. All MIT-licensed, minimal dependencies, and designed to work right after install.
 
 ## Install
 
 Add the marketplace (one-time):
 
 ```
-/plugin marketplace add eladlaor/claudecodelad
+/plugin marketplace add eladlaor/claudelad
 ```
 
 Then install any plugin:
 
 ```
-/plugin install <plugin-name>@claudecodelad
+/plugin install <plugin-name>@claudelad
 ```
 
 ## Plugins
@@ -22,78 +32,25 @@ Then install any plugin:
 
 <img src="illustrations/today_is_today.jpg" width="500">
 
-Claude Code doesn't natively know what day it is. This plugin injects today's date into Claude's context on every session start.
+Claude Code knows today's date but not the day of week, current time, or timezone. Without those, it can't reason about deadlines, tell you if something is due tomorrow, or generate accurate timestamps in your timezone. This zero-config hook injects the full temporal context on every session start.
 
-```
-/plugin install date-context@claudecodelad
-```
+**Example:** `Today is Saturday, March 28, 2026. Current time: 14:30 (IST +03:00).`
+
+[Documentation](plugins/date-context/README.md) · `/plugin install date-context@claudelad`
 
 ### session-finder
 
 <img src="illustrations/session_finder.jpg" width="600">
 
-Gives Claude Code a searchable memory of past sessions.
+Claude Code has no built-in way to search or recall past sessions. If you worked on something last week, you're stuck scrolling through `claude --resume` hoping to recognize it by name. session-finder builds a structured index on every session exit, with LLM-generated summaries, files touched, git branch, and timestamps. You search by natural language description and get a resume command back.
 
-Every time you exit a session, a `SessionEnd` hook automatically:
-- Extracts the first and last user prompts, files touched (Write/Edit), git branch, timestamps, and session name (slug)
-- Generates a one-sentence LLM summary using Haiku
-- Appends it all as one line to `~/.claude/session-index.jsonl`
+[Documentation](plugins/session-finder/README.md) · `/plugin install session-finder@claudelad`
 
-Then when you need to find a past session:
+### md-to-gdoc
 
-```
-/session-finder:find-session that session where I set up the database schema
-```
+<img src="illustrations/md-to-gdoc.png" width="600">
 
-Claude searches the index, ranks results using its own reasoning, and returns matches with ready-to-use `claude --resume <id>` commands.
+Writing in markdown is fast. Formatting a Google Doc manually is slow. Copy-pasting loses heading structure, breaks tables, and produces a mess. This plugin converts markdown to fully formatted Google Docs via the Docs API, with proper headings, tables, lists, cover pages, and custom format profiles you can extract from any existing Google Doc.
 
-Works naturally with `/rename` — if you rename a session, the name is indexed and searchable too.
+[Documentation](plugins/md-to-gdoc/README.md) · `/plugin install md-to-gdoc@claudelad`
 
-```
-/plugin install session-finder@claudecodelad
-```
-
-### worktree-manager
-
-Manage persistent git worktrees for parallel human+AI development. Unlike Claude's built-in `EnterWorktree` (temporary, session-scoped agent isolation), this plugin creates **persistent sibling directories** for long-lived parallel work across sessions.
-
-**Two skills included:**
-
-- **`/worktree-manager:worktree`** — Create, list, remove, and check status of worktrees
-  ```
-  /worktree-manager:worktree create feature-auth
-  /worktree-manager:worktree list
-  /worktree-manager:worktree status
-  /worktree-manager:worktree remove feature-auth
-  ```
-
-- **`/worktree-manager:merge`** — Merge all worktree branches back with dependency-ordered merges, conflict resolution, auto-detected verification, and cleanup
-  ```
-  /worktree-manager:merge
-  ```
-
-**SessionStart hook** automatically detects if you're inside a worktree and injects context (branch, main repo path, sibling worktrees).
-
-```
-/plugin install worktree-manager@claudecodelad
-```
-
-### timewatch-fill
-
-Fill TimeWatch attendance via browser automation. Uses claude-in-chrome to log into TimeWatch, navigate to the attendance page, and fill entry/exit times for one or more days.
-
-**Setup:** Each user creates their own credentials file at `~/.config/timewatch-fill/.env` (see plugin docs for details).
-
-```
-/timewatch-fill:timewatch-fill                              # Fill today (09:00-18:30, SolugenAI, office)
-/timewatch-fill:timewatch-fill tomorrow                     # Fill tomorrow
-/timewatch-fill:timewatch-fill today 0830 1730              # Custom times
-/timewatch-fill:timewatch-fill this month                   # Fill all unfilled workdays this month
-/timewatch-fill:timewatch-fill yesterday 0900 1830 Cinema home  # Custom task + location
-```
-
-Requires the `claude-in-chrome` extension in Chrome.
-
-```
-/plugin install timewatch-fill@claudecodelad
-```
