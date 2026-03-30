@@ -43,6 +43,18 @@
       "license": "MIT",
       "category": "document-creation",
       "tags": ["markdown", "google-doc", "gdoc", "conversion", "gws", "workspace", "format-profile"]
+    },
+    {
+      "name": "notebooklm-upload",
+      "source": "./plugins/notebooklm-upload",
+      "description": "Batch upload local files from directories to Google NotebookLM notebooks. Supports filtering by file type, multiple directories, and dry-run mode.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Elad Laor"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "tags": ["notebooklm", "upload", "batch", "google", "sources"]
     }
   ]
 }
