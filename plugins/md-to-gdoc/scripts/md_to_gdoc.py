@@ -47,6 +47,7 @@ class BlockType(StrEnum):
     TOC_ENTRY = "toc_entry"
     HEADING_1 = "heading_1"
     HEADING_2 = "heading_2"
+    HEADING_3 = "heading_3"
     PARAGRAPH = "paragraph"
     BULLET = "bullet"
     NUMBERED = "numbered"
@@ -89,13 +90,23 @@ class MarkdownParser:
     from the FormatProfile.
     """
 
-    def __init__(self, content: str, profile: FormatProfile):
+    def __init__(self, content: str, profile: FormatProfile, original_md_format: bool = False):
         self.lines = content.split("\n")
         self.blocks: list[Block] = []
         self.title = ""
         self.profile = profile
+        self.original_md_format = original_md_format
 
     def parse(self) -> list[Block]:
+        if self.original_md_format:
+            self._parse_body_section(self.lines)
+            # Extract title from first H1 block
+            for block in self.blocks:
+                if block.block_type == BlockType.HEADING_1:
+                    self.title = block.text
+                    break
+            return self.blocks
+
         sections = self._split_by_horizontal_rules()
         if not sections:
             raise ValueError("Markdown has no content")
@@ -228,17 +239,32 @@ class MarkdownParser:
                 i += 1
                 continue
 
-            # H1: any line starting with "# "
-            if stripped.startswith("# ") and not stripped.startswith("## "):
-                text = stripped[2:].strip()
-                self.blocks.append(Block(block_type=BlockType.HEADING_1, text=text))
+            # Horizontal rule: --- in body
+            if stripped == "---":
+                self.blocks.append(Block(block_type=BlockType.HORIZONTAL_RULE))
                 i += 1
                 continue
 
-            # H2: starts with "## "
-            if stripped.startswith("## "):
+            # H3: starts with "### " (check before H2/H1)
+            if stripped.startswith("### "):
+                text = stripped[4:].strip()
+                block = Block(block_type=BlockType.HEADING_3, text=text)
+                block.spans = self._parse_inline(text)
+                self.blocks.append(block)
+                i += 1
+                continue
+
+            # H2: starts with "## " (check before H1)
+            if stripped.startswith("## ") and not stripped.startswith("### "):
                 text = stripped[3:].strip()
                 self.blocks.append(Block(block_type=BlockType.HEADING_2, text=text))
+                i += 1
+                continue
+
+            # H1: starts with "# "
+            if stripped.startswith("# ") and not stripped.startswith("## "):
+                text = stripped[2:].strip()
+                self.blocks.append(Block(block_type=BlockType.HEADING_1, text=text))
                 i += 1
                 continue
 
@@ -610,6 +636,24 @@ class DocsRequestBuilder:
         ]
         return txt, sty
 
+    def _build_heading_3(self, block: Block):
+        p = self.profile
+        h = p.heading_3
+        if h is None:
+            return self._build_paragraph(block)
+        text = block.text + "\n"
+        start, end = self._insert_text(text)
+        txt = [self._make_insert_text(text, start)]
+
+        bookmark_id = self._heading_to_anchor(block.text)
+        self.bookmarks[bookmark_id] = start
+
+        sty = [
+            self._make_paragraph_style(start, end, named_style=h.named_style, space_above=h.space_before, space_below=h.space_after),
+            self._make_text_style(start, end - 1, bold=h.bold or None, font_size=h.font_size, font_family=p.font_family),
+        ]
+        return txt, sty
+
     def _build_paragraph(self, block: Block):
         p = self.profile
         txt_reqs = []
@@ -843,8 +887,9 @@ def split_requests(requests: list[dict], max_per_chunk: int = MAX_REQUESTS_PER_C
 def main():
     parser = argparse.ArgumentParser(description="Convert markdown to Google Docs batchUpdate JSON")
     parser.add_argument("markdown_file", help="Path to the markdown file")
-    parser.add_argument("--profile", "-p", help="Path to a FormatProfile JSON file (default: SOW preset)")
+    parser.add_argument("--profile", "-p", help="Path to a FormatProfile JSON file")
     parser.add_argument("--output", "-o", help="Output directory or file path (default: same dir as input)")
+    parser.add_argument("--sow", action="store_true", help="Use SOW template mode (cover page, TOC rewriting, SOW fonts)")
     args = parser.parse_args()
 
     md_path = args.markdown_file
@@ -853,19 +898,22 @@ def main():
         sys.exit(1)
 
     # Load format profile
+    original_md_format = not args.sow
     if args.profile:
         if not os.path.exists(args.profile):
             print(json.dumps({"error": f"Profile not found: {args.profile}"}))
             sys.exit(1)
         profile = FormatProfile.from_json(args.profile)
-    else:
+    elif args.sow:
         profile = FormatProfile.sow_default()
+    else:
+        profile = FormatProfile.markdown_default()
 
     with open(md_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Parse markdown
-    md_parser = MarkdownParser(content, profile)
+    md_parser = MarkdownParser(content, profile, original_md_format=original_md_format)
     try:
         blocks = md_parser.parse()
     except ValueError as e:

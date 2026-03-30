@@ -7,10 +7,11 @@
   - [date-context](#date-context)
   - [session-finder](#session-finder)
   - [md-to-gdoc](#md-to-gdoc)
+  - [notebooklm-upload](#notebooklm-upload)
 
 A Claude Code plugin marketplace. Hooks, skills, and automations that extend what Claude Code can do out of the box.
 
-Three plugins covering productivity, document creation, and workflow automation. All MIT-licensed, minimal dependencies, and designed to work right after install.
+Four plugins covering productivity, document creation, and workflow automation. All MIT-licensed, minimal dependencies, and designed to work right after install.
 
 ## Install
 
@@ -53,4 +54,14 @@ Claude Code has no built-in way to search or recall past sessions. If you worked
 Writing in markdown is fast. Formatting a Google Doc manually is slow. Copy-pasting loses heading structure, breaks tables, and produces a mess. This plugin converts markdown to fully formatted Google Docs via the Docs API, with proper headings, tables, lists, cover pages, and custom format profiles you can extract from any existing Google Doc.
 
 [Documentation](plugins/md-to-gdoc/README.md) · `/plugin install md-to-gdoc@claudelad`
+
+### notebooklm-upload
+
+<img src="illustrations/notebooklm-upload.png" width="600">
+
+You have notes, PDFs, recordings, and docs scattered across directories. Getting them into NotebookLM means uploading one file at a time through a browser. This plugin batch-uploads entire local directories to a NotebookLM notebook in one command — with file type filtering, dry-run preview, and automatic validation.
+
+**Example:** `upload ~/research --notebook "Q1 Review" --include pdf,md,mp3`
+
+[Documentation](plugins/notebooklm-upload/README.md) · `/plugin install notebooklm-upload@claudelad`
 

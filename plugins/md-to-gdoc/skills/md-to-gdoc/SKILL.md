@@ -64,19 +64,30 @@ Verify with: `test -f "$SCRIPTS_DIR/create_gdoc.py"`
 
 ## Usage Modes
 
-### Mode A: Convert with default profile (SOW format)
+### Mode A: Convert markdown faithfully (default)
 
 ```
 /md-to-gdoc path/to/file.md
 ```
 
-### Mode B: Convert with a saved profile
+Renders the markdown as-is into a Google Doc — no cover page, no TOC rewriting, no SOW branding.
+Headings map to headings (H1/H2/H3), `---` renders as horizontal rules, tables/lists/bold/italic preserved.
+
+### Mode B: Convert with SOW template
+
+```
+/md-to-gdoc path/to/file.md --sow
+```
+
+Applies the SOW format profile: cover page extraction, TOC rewriting, branded fonts/sizes.
+
+### Mode C: Convert with a saved profile
 
 ```
 /md-to-gdoc path/to/file.md --profile <name-or-path>
 ```
 
-### Mode C: Convert with a reference Google Doc (first time)
+### Mode D: Convert with a reference Google Doc (first time)
 
 ```
 /md-to-gdoc path/to/file.md --reference-doc <google-doc-url-or-id> --save-profile <name>
@@ -111,8 +122,10 @@ The entire conversion runs as a single command:
 
 ```bash
 cd "$SCRIPTS_DIR"
-python3 create_gdoc.py "<markdown-file>" [--profile "<profile-json-path>"] [--folder-id "<folder-id>"]
+python3 create_gdoc.py "<markdown-file>" [--sow] [--profile "<profile-json-path>"] [--folder-id "<folder-id>"]
 ```
+
+Pass `--sow` only when the user explicitly requests SOW template mode (Mode B).
 
 This single script handles everything:
 - Parses the markdown into structured blocks

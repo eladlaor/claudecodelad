@@ -111,8 +111,9 @@ def move_to_folder(doc_id: str, folder_id: str) -> None:
 def main():
     parser = argparse.ArgumentParser(description="Convert markdown to a formatted Google Doc (end-to-end)")
     parser.add_argument("markdown_file", help="Path to the markdown file")
-    parser.add_argument("--profile", "-p", help="Path to a FormatProfile JSON file (default: SOW preset)")
+    parser.add_argument("--profile", "-p", help="Path to a FormatProfile JSON file")
     parser.add_argument("--folder-id", "-f", help="Google Drive folder ID to move the doc into")
+    parser.add_argument("--sow", action="store_true", help="Use SOW template mode (cover page, TOC rewriting, SOW fonts)")
     args = parser.parse_args()
 
     md_path = args.markdown_file
@@ -124,13 +125,16 @@ def main():
     check_gws()
 
     # Load profile
+    original_md_format = not args.sow
     if args.profile:
         if not os.path.exists(args.profile):
             print(f"Error: profile not found: {args.profile}", file=sys.stderr)
             sys.exit(1)
         profile = FormatProfile.from_json(args.profile)
-    else:
+    elif args.sow:
         profile = FormatProfile.sow_default()
+    else:
+        profile = FormatProfile.markdown_default()
 
     # Read markdown
     with open(md_path, "r", encoding="utf-8") as f:
@@ -138,7 +142,7 @@ def main():
 
     # Parse
     print("Parsing markdown...", file=sys.stderr)
-    md_parser = MarkdownParser(content, profile)
+    md_parser = MarkdownParser(content, profile, original_md_format=original_md_format)
     try:
         blocks = md_parser.parse()
     except ValueError as e:

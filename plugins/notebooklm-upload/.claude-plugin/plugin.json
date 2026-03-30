@@ -1,0 +1,5 @@
+{
+  "name": "notebooklm-upload",
+  "description": "Batch upload local files from directories to Google NotebookLM notebooks. Supports filtering by file type, multiple directories, and dry-run mode.",
+  "version": "1.0.0"
+}

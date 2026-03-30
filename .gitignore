@@ -8,5 +8,4 @@ __pycache__/
 
 # Plugins not yet published
 plugins/worktree-manager/
-plugins/notebooklm-upload/
 plugins/timewatch-fill/

@@ -155,6 +155,7 @@ class FormatProfile:
         font_size=16.0, bold=True, alignment="START",
         space_before=16.0, space_after=8.0, named_style="HEADING_2"
     ))
+    heading_3: Optional[HeadingConfig] = None
     body: BodyConfig = field(default_factory=BodyConfig)
     table: TableConfig = field(default_factory=TableConfig)
     toc: TocConfig = field(default_factory=TocConfig)
@@ -165,6 +166,32 @@ class FormatProfile:
     def sow_default(cls) -> "FormatProfile":
         """Default SOW preset matching a professional Statement of Work format."""
         return cls(name="default-sow")
+
+    @classmethod
+    def markdown_default(cls) -> "FormatProfile":
+        """Minimal profile that defers to Google Docs native defaults."""
+        return cls(
+            name="markdown-default",
+            font_family="Arial",
+            heading_1=HeadingConfig(
+                font_size=24.0, bold=True, space_before=24.0, space_after=6.0, named_style="HEADING_1"
+            ),
+            heading_2=HeadingConfig(
+                font_size=18.0, bold=True, space_before=18.0, space_after=6.0, named_style="HEADING_2"
+            ),
+            heading_3=HeadingConfig(
+                font_size=14.0, bold=True, space_before=14.0, space_after=4.0, named_style="HEADING_3"
+            ),
+            body=BodyConfig(font_size=11.0, line_spacing=1.15, space_after=6.0),
+            table=TableConfig(
+                cell_font_size=10.0, header_bold=True,
+                header_bg_color=RGBColor.from_hex("#e8eaed").to_dict()
+            ),
+            toc=TocConfig(),
+            hr=HorizontalRuleConfig(),
+            placeholder=PlaceholderConfig(),
+            cover=CoverPageConfig(),
+        )
 
     @classmethod
     def from_json(cls, path: str) -> "FormatProfile":
@@ -184,6 +211,7 @@ class FormatProfile:
             heading_2=HeadingConfig(**data["heading_2"]) if "heading_2" in data else HeadingConfig(
                 font_size=16.0, space_before=16.0, space_after=8.0, named_style="HEADING_2"
             ),
+            heading_3=HeadingConfig(**data["heading_3"]) if "heading_3" in data else None,
             body=BodyConfig(**data["body"]) if "body" in data else BodyConfig(),
             table=TableConfig(**data["table"]) if "table" in data else TableConfig(),
             toc=TocConfig(**data["toc"]) if "toc" in data else TocConfig(),
