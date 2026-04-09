@@ -1,0 +1,5 @@
+{
+  "name": "timewatch-fill",
+  "description": "Fill TimeWatch attendance via browser automation (claude-in-chrome). Supports filling a single day or range of days with configurable times, task, and location.",
+  "version": "1.0.0"
+}

@@ -1,5 +1,5 @@
 .claude/
-knowledge/
+/knowledge/
 plugin-ideas/
 __pycache__/
 *.pyc
@@ -8,4 +8,3 @@ __pycache__/
 
 # Plugins not yet published
 plugins/worktree-manager/
-plugins/timewatch-fill/
